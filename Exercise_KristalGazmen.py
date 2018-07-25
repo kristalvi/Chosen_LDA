@@ -3,14 +3,11 @@ Created on 17 Jul 2018
 
 @author: Kristal Gazmen
 '''
-from nltk.stem.wordnet import WordNetLemmatizer
-from nltk.stem.snowball import SnowballStemmer
-from tom_lib.visualization import visualization
-from tom_lib.nlp.topic_model import LatentDirichletAllocation,\
-    NonNegativeMatrixFactorization
-from tom_lib.visualization.visualization import Visualization
+from tom_lib.structure.corpus import Corpus
+
 
 '''
+*************************************************************************************************************************
     1/ Can you write a python script (or use another language of your choice) to 
         (a) parse the following  json data stream, 
         (b) create an LDA or another model of your choice for the review data and 
@@ -19,18 +16,20 @@ from tom_lib.visualization.visualization import Visualization
     Note:                                      
         We are not looking for perfectly executable code and will not run the script. 
         We put more emphasis on the quality of the models built and the understandability/layout of the code. 
+*************************************************************************************************************************        
 '''
 
 '''
-*************************************************************************************************************************
+--------------------------------------------------------------------------------------------------------------------------
     This is for 1(a).
     json.dumps, json.loads, and nested for statements were used to parse the data
-*************************************************************************************************************************
+--------------------------------------------------------------------------------------------------------------------------
 '''
-
+print('This is part 1(a)')
 import json
 import os
 import string
+import pandas as pd
 
 '''
 Step 1: to be able to create/read the json data stream, edit the review data as follows:
@@ -85,22 +84,21 @@ for item in json_loaded['employee']:
     parsed_details['name'] = item['name']
     parsed_details['updated'] = item['updated']
     parsed_details['recommendations'] = []
-    
+        
     for feedback in item['recommendations']:
         parsed_details['recommendations'].append(feedback)
-    
+        
     parsed_data.append(parsed_details)
+
 #https://stackoverflow.com/questions/47060035/python-parse-json-array   
 
 '''
 Step 4: Test if the data has been parsed successfully by calling the recommendations for Donna Summer
 '''
-    
 print(parsed_data[0]['recommendations'])
 
-
 '''
-*************************************************************************************************************************
+--------------------------------------------------------------------------------------------------------------------------
     This is an alternative solution to 1(a).
     Package: os, json
     
@@ -109,15 +107,15 @@ print(parsed_data[0]['recommendations'])
     Once the json has been loaded, parsing and assigning the values to an empty array are the same as the previous solution.
     
     Risk: replacing single quotation with double quotes, especially if double quotes were used inside the feedback provided
-*************************************************************************************************************************
+--------------------------------------------------------------------------------------------------------------------------
 '''
 
 #https://stackoverflow.com/questions/27907633/multiple-json-objects-in-one-file-extract-by-python/27907893
+print('\n\nThis is an alternative solution to 1(a)')
 
 '''
 Step 1: Update the file path and read the file
 '''
-
 
 script_path = os.path.abspath(__file__) 
 script_dir = os.path.split(script_path)[0]
@@ -165,55 +163,90 @@ Step 4: Test if the data has been parsed successfully by calling the recommendat
 print(parsed_data[1]['recommendations'])
 
 '''
-*************************************************************************************************************************
-    This is for 1(b).
-    json.dumps, json.loads, and nested for statements were used to parse the data
-*************************************************************************************************************************
+Step 5: For future use, create a dataframe for name and recommendations
 '''
+#https://stackoverflow.com/questions/41168558/python-how-to-convert-json-file-to-dataframe
+id_no = 0
+tom_array = []
+
+for item in json_array:
+    tom_dict = {"id":None, "title": None, "text":None}
+    tom_dict['id'] = id_no
+    tom_dict['title'] = item['name']
+    for feedback in item['recommendations']:
+        tom_dict['text'] = feedback
+        tom_array.append(tom_dict)
++id_no 
+tom_df = pd.DataFrame(tom_array)
+tom_df = tom_df[['id','title','text']]
+
+'''
+--------------------------------------------------------------------------------------------------------------------------
+    This is for 1(b): create an LDA or another model of your choice for the review data.
+    
+    Packages: nltk, tom_lib, gensim, lda, stop_words, and pandas
+        (i) 'nltk' and 'stop_words' to pre-process the data;
+        (ii) 'tom_lib' with 'lda' to identify the optimal number of topics;
+        (ii) 'gensim' to create the LDA model; and
+        (iv) 'pandas' to create and manage the data frame
+--------------------------------------------------------------------------------------------------------------------------
+'''
+print('\n\nThis is for 1(b)')
+
+import pandas as pd
 
 from nltk.tokenize import RegexpTokenizer
-from stop_words import get_stop_words
-from nltk.stem.porter import PorterStemmer
+from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.stem.snowball import SnowballStemmer
-from gensim import corpora, models
+from nltk.stem.porter import PorterStemmer
+
+from stop_words import get_stop_words
+
 import gensim
+from gensim import corpora, models
+
 import tom_lib  #part of the rquirements for tom_lib
+from tom_lib.visualization import visualization
+from tom_lib.nlp.topic_model import LatentDirichletAllocation,\
+    NonNegativeMatrixFactorization
+from tom_lib.visualization.visualization import Visualization
+
 import lda
+
 
 #https://rpubs.com/barberje/LDA
 #https://www.analyticsvidhya.com/blog/2016/08/beginners-guide-to-topic-modeling-in-python/
 #https://pypi.org/project/tom_lib/
 #https://pythonprogramminglanguage.com/bag-of-words/
-'''
-Step 1: View feedbacks as list
-'''
 
+'''
+Step 1: Consolidate feedback for all employees under a single list called 'feedback'
+'''
 feedback = parsed_data[0]['recommendations'] + parsed_data[1]['recommendations']
-print(feedback)
-
 
 '''
-Step 2:
-
+Step 2: Based on the packages imported, set-up the functions needed for the pre-processing of data
 '''
+
 tokenizer = RegexpTokenizer(r'\w+')
 stop_ref = get_stop_words('en')
 punc_ref = set(string.punctuation)
 lemma = WordNetLemmatizer()
-#stemmer = PorterStemmer()
-stemmer = SnowballStemmer('english')
+stemmer = SnowballStemmer('english') #stemmer = PorterStemmer() is an alternative
 
 '''
 Step 3: Create an empty array for pre-processed data
 '''
 processed_feedback = []
-'''
-Step 4: Cleanse the data by performing the following:
-    (i) tokenizing the string into words
-    (ii) removing stop words, such as articles
-    (iii) stemming the words to their root form
-'''
 
+'''
+Step 4: Pre-process the data by:
+    (i) tokenizing or splitting the string into individual words or texts
+    (ii) removing stop words, such as articles
+    (iii) removing punctuations
+    (iv) stemming the words into their root form
+Note: convert strings to lower case, so that they can be processed more accurately
+'''
 for item in feedback:   
     feedback_lc = item.lower()
     
@@ -230,52 +263,57 @@ print(dictionary)
 
 corpus = [dictionary.doc2bow(item) for item in processed_feedback]
 print(corpus)
-#######
+
 '''
-id    title    text
-1    Document 1's title    This is the full content of document 1.
-2    Document 2's title    This is the full content of document 2.
-etc.
-https://github.com/AdrienGuille/TOM/blob/master/README.md
+Step 5: To create the LDA model, we need to determine the number of topics first.
+tom_lib can be used to determine the best count. However, input data must be prepared
+to fit the required package format. For this, we refer to the 'tom_df' created in 1(a)
 '''
-corpus = Corpus(processed_feedback, language='english',vectorization='tfidf',
-                n_gram=1, max_relative_frequency=0.8, min_absolute_frequency=4)
-#
-topic_model = LatentDirichletAllocation(corpus)
-topic_model.infer_topics(num_topics=3, algorithm='gibbs')
+#required tom_lib format for the input: (already created in step 1)
+#id    title    text
+#1    Document 1's title    This is the full content of document 1.
+#2    Document 2's title    This is the full content of document 2.
+#etc.
+#https://github.com/AdrienGuille/TOM/blob/master/README.md
 
-viz = Visualization(topic_model)
+#use the tom_df from 1(a)
+tom_df.to_csv('tom_df.csv', sep='\t', index=False, encoding='utf-8') #, sep='\t'
 
-viz.plot_greene_metric(min_num_topics=2,
-                       max_num_topics=6,
-                       tao=2, step=1,
-                       top_n_words=2)
-viz.plot_arun_metric(min_num_topics=2,
-                     max_num_topics=6,
-                     iterations=1)
-viz.plot_brunet_metric(min_num_topics=2,
-                       max_num_topics=6,
-                       iterations=1)
+tom_lib_corpus = Corpus(source_file_path='tom_df.csv', 
+                vectorization='tfidf', 
+                n_gram=1,
+                max_relative_frequency=0.8, 
+                min_absolute_frequency=2)
 
-######
+topic_model = LatentDirichletAllocation(tom_lib_corpus)
+
+from bokeh.io import show, output_notebook
+from bokeh.plotting import figure
+output_notebook()
+
+#we have 2 as the minimum because we want the documents to be clustered and not fall under a single group
+#we have 4 as the maximum because we assume that each document can belong to a unique topic, and anything more
+#than that is too mayn for the sample that we have
+
+p = figure(plot_height=250)
+p.line(range(2, 4), topic_model.arun_metric(min_num_topics=2, max_num_topics=4, iterations=1), line_width=2)
+show(p)
+
+#the output shows that two is the optimal number of topic.
+
+#https://github.com/AdrienGuille/TOM/blob/388c71ef0da7190740f19e5e8a838df95521a06e/TOM.ipynb
+
+'''
+Step 6: Create an LDA model for two topics
+'''
+
 ldamodel_2 = gensim.models.ldamodel.LdaModel(corpus, num_topics=2, id2word=dictionary, passes=20)
-ldamodel_3 = gensim.models.ldamodel.LdaModel(corpus, num_topics=3, id2word=dictionary, passes=20)
-ldamodel_4 = gensim.models.ldamodel.LdaModel(corpus, num_topics=4, id2word=dictionary, passes=20)
-ldamodel_5 = gensim.models.ldamodel.LdaModel(corpus, num_topics=5, id2word=dictionary, passes=20)
-ldamodel_6 = gensim.models.ldamodel.LdaModel(corpus, num_topics=6, id2word=dictionary, passes=20)
-
 print(ldamodel_2)
 
-
-'''
-Print results
-'''
-
-print(ldamodel_4.print_topics(num_topics=4, num_words=5))
 '''
 *************************************************************************************************************************
     This is for 1(c).
-    To convert ther reviews to feature vectors, 
+    To convert the reviews to feature vectors, 
 *************************************************************************************************************************
 '''
 #https://stackoverflow.com/questions/20984841/topic-distribution-how-do-we-see-which-document-belong-to-which-topic-after-doi
