@@ -63,7 +63,7 @@ review_data = json.dumps(
 #https://blog.eduonix.com/web-programming-tutorials/learn-different-json-data-types-format/
 
 '''
-Step 2: use 'json.loads' to load the review data;
+Step 2: use 'json.loads' to load the review data
 '''
 
 json_loaded = json.loads(review_data)
@@ -205,7 +205,7 @@ from stop_words import get_stop_words
 import gensim
 from gensim import corpora, models
 
-import tom_lib  #part of the rquirements for tom_lib
+import tom_lib
 from tom_lib.visualization import visualization
 from tom_lib.nlp.topic_model import LatentDirichletAllocation,\
     NonNegativeMatrixFactorization
@@ -213,6 +213,8 @@ from tom_lib.visualization.visualization import Visualization
 
 import lda
 
+from bokeh.io import show, output_notebook
+from bokeh.plotting import figure
 
 #https://rpubs.com/barberje/LDA
 #https://www.analyticsvidhya.com/blog/2016/08/beginners-guide-to-topic-modeling-in-python/
@@ -227,7 +229,6 @@ feedback = parsed_data[0]['recommendations'] + parsed_data[1]['recommendations']
 '''
 Step 2: Based on the packages imported, set-up the functions needed for the pre-processing of data
 '''
-
 tokenizer = RegexpTokenizer(r'\w+')
 stop_ref = get_stop_words('en')
 punc_ref = set(string.punctuation)
@@ -279,6 +280,7 @@ to fit the required package format. For this, we refer to the 'tom_df' created i
 #use the tom_df from 1(a)
 tom_df.to_csv('tom_df.csv', sep='\t', index=False, encoding='utf-8') #, sep='\t'
 
+'''
 tom_lib_corpus = Corpus(source_file_path='tom_df.csv', 
                 vectorization='tfidf', 
                 n_gram=1,
@@ -287,8 +289,6 @@ tom_lib_corpus = Corpus(source_file_path='tom_df.csv',
 
 topic_model = LatentDirichletAllocation(tom_lib_corpus)
 
-from bokeh.io import show, output_notebook
-from bokeh.plotting import figure
 output_notebook()
 
 #we have 2 as the minimum because we want the documents to be clustered and not fall under a single group
@@ -298,9 +298,8 @@ output_notebook()
 p = figure(plot_height=250)
 p.line(range(2, 4), topic_model.arun_metric(min_num_topics=2, max_num_topics=4, iterations=1), line_width=2)
 show(p)
-
+'''
 #the output shows that two is the optimal number of topic.
-
 #https://github.com/AdrienGuille/TOM/blob/388c71ef0da7190740f19e5e8a838df95521a06e/TOM.ipynb
 
 '''
@@ -311,19 +310,47 @@ ldamodel_2 = gensim.models.ldamodel.LdaModel(corpus, num_topics=2, id2word=dicti
 print(ldamodel_2)
 
 '''
-*************************************************************************************************************************
+--------------------------------------------------------------------------------------------------------------------------
     This is for 1(c).
     To convert the reviews to feature vectors, 
-*************************************************************************************************************************
+--------------------------------------------------------------------------------------------------------------------------
 '''
+print('\n\nThis is for 1(c): convert the reviews into feature vectors using the model that you built. ')
 #https://stackoverflow.com/questions/20984841/topic-distribution-how-do-we-see-which-document-belong-to-which-topic-after-doi
 
-'''
-2/ Now, the team would like to search the reviews. Given a free-text string, called search_review, 
-can you write another python script to compare the free-text string to all the review feature vectors in the database. 
-The team would like to rank the comparisons and display the top three on the screen (python print).
-'''
+print('\nThis shows the top words (based on probability) per topic cluster')
+print(ldamodel_2.print_topics(num_topics=2, num_words=3))
+#[(0, '0.067*"donna" + 0.067*"high" + 0.066*"work"'), (1, '0.080*"work" + 0.079*"profession" + 0.049*"alway"')]
 
+lda_corpus = ldamodel_2[corpus]
+
+print('\nThis shows the reviews that fall under each topic cluster')
+cluster1 = [j for i,j in zip(lda_corpus,feedback) if i[0][1] > 0.80]
+cluster2 = [j for i,j in zip(lda_corpus,feedback) if i[1][1] > 0.80]
+#threshold has been set at 80% in this case, but can be tested if reasonable https://stackoverflow.com/questions/20984841/topic-distribution-how-do-we-see-which-document-belong-to-which-topic-after-doi
+print(cluster1)
+print(cluster2)
+
+all_topics = ldamodel_2.get_document_topics(corpus, per_word_topics=True)
+
+
+for review_topics, word_topics, phi_values in all_topics:
+    print('Review \n')
+    print('Document topics:', review_topics)
+    print('Word topics:', word_topics)
+    print('Phi values:', phi_values)
+    print(" ")
+    print('-------------- \n')
+#https://github.com/RaRe-Technologies/gensim/blob/develop/docs/notebooks/topic_methods.ipynb
+
+'''
+*************************************************************************************************************************
+    2/ Now, the team would like to search the reviews. Given a free-text string, called search_review, 
+    can you write another python script to compare the free-text string to all the review feature vectors in the database. 
+    The team would like to rank the comparisons and display the top three on the screen (python print).
+*************************************************************************************************************************
+'''
+print('\n\nThis is for 2/. Rank the comparisons and display the top 3')
 given_data = {'search_review': 'Excellent professional attitude that works across the whole company and is a pleasure to work with'}
 
 search_review = given_data['search_review']
