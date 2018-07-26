@@ -216,6 +216,8 @@ import lda
 from bokeh.io import show, output_notebook
 from bokeh.plotting import figure
 
+import numpy as np
+np.random.seed(0)
 #https://rpubs.com/barberje/LDA
 #https://www.analyticsvidhya.com/blog/2016/08/beginners-guide-to-topic-modeling-in-python/
 #https://pypi.org/project/tom_lib/
@@ -322,6 +324,27 @@ print('\nThis shows the top words (based on probability) per topic cluster')
 print(ldamodel_2.print_topics(num_topics=2, num_words=3))
 #[(0, '0.067*"donna" + 0.067*"high" + 0.066*"work"'), (1, '0.080*"work" + 0.079*"profession" + 0.049*"alway"')]
 
+all_topics = ldamodel_2.get_document_topics(corpus, per_word_topics=True)
+i=0
+feature_data = []
+
+for review_topics, word_topics, phi_values in all_topics:
+    feature_details = {'Review':None, 'Document Topics':None, 
+                       'Word Topics':None,'Phi Values':None}
+    feature_details['Review'] = feedback[i]
+    feature_details['Document Topics'] = review_topics
+    feature_details['Word Topics'] = word_topics
+    feature_details['Phi Values'] = phi_values
+    feature_data.append(feature_details)
+    print('Review:', feedback[i])
+    print('Document Topics:', review_topics)
+    print('Word Topics:', word_topics)
+    print('Phi Values:', phi_values)
+    print(" \n\n")
+
+print(feature_data)
+#https://github.com/RaRe-Technologies/gensim/blob/develop/docs/notebooks/topic_methods.ipynb
+
 lda_corpus = ldamodel_2[corpus]
 
 print('\nThis shows the reviews that fall under each topic cluster')
@@ -330,18 +353,6 @@ cluster2 = [j for i,j in zip(lda_corpus,feedback) if i[1][1] > 0.80]
 #threshold has been set at 80% in this case, but can be tested if reasonable https://stackoverflow.com/questions/20984841/topic-distribution-how-do-we-see-which-document-belong-to-which-topic-after-doi
 print(cluster1)
 print(cluster2)
-
-all_topics = ldamodel_2.get_document_topics(corpus, per_word_topics=True)
-
-
-for review_topics, word_topics, phi_values in all_topics:
-    print('Review \n')
-    print('Document topics:', review_topics)
-    print('Word topics:', word_topics)
-    print('Phi values:', phi_values)
-    print(" ")
-    print('-------------- \n')
-#https://github.com/RaRe-Technologies/gensim/blob/develop/docs/notebooks/topic_methods.ipynb
 
 '''
 *************************************************************************************************************************
