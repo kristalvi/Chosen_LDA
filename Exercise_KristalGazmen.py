@@ -318,17 +318,34 @@ print(ldamodel_2)
 --------------------------------------------------------------------------------------------------------------------------
 '''
 print('\n\nThis is for 1(c): convert the reviews into feature vectors using the model that you built. ')
-#https://stackoverflow.com/questions/20984841/topic-distribution-how-do-we-see-which-document-belong-to-which-topic-after-doi
 
+'''
+Step 1: View the top words from the LDA model built in 1(b)
+'''
 print('\nThis shows the top words (based on probability) per topic cluster')
 print(ldamodel_2.print_topics(num_topics=2, num_words=3))
-#[(0, '0.067*"donna" + 0.067*"high" + 0.066*"work"'), (1, '0.080*"work" + 0.079*"profession" + 0.049*"alway"')]
 
+'''
+Step 2: Apply the LDA model to the corpus to see how the reviews are clustered together
+'''
+corpus_on_LDA = ldamodel_2[corpus]
+print('\nThis shows the reviews that fall under each topic cluster')
+cluster1 = [j for i,j in zip(corpus_on_LDA,feedback) if i[0][1] > 0.80]
+cluster2 = [j for i,j in zip(corpus_on_LDA,feedback) if i[1][1] > 0.80]
+#threshold has been set at 80% in this case, but can be tested if reasonable https://stackoverflow.com/questions/20984841/topic-distribution-how-do-we-see-which-document-belong-to-which-topic-after-doi
+print(cluster1) #['I worked with Donna for 5 years and can highly recommend her as an experienced, knowledgeable. She is very hardworking designer with a meticulous eye for detail and creativity', 'I have worked with Donna for a number of years and have always found her to be extremely professional and a real expert in her field. ']
+print(cluster2) #['Donna is always on the ball, highly organised and a real pleasure to work with.', 'Justin is a consummate professional and a pleasure to work with at all times!']
+
+'''
+Step 3: Apply the LDA model to the corpus to convert the reviews into feature vectors stored in 'feature_data'
+'''
 all_topics = ldamodel_2.get_document_topics(corpus, per_word_topics=True)
+
 i=0
 feature_data = []
 
 for review_topics, word_topics, phi_values in all_topics:
+    print("\n")
     feature_details = {'Review':None, 'Document Topics':None, 
                        'Word Topics':None,'Phi Values':None}
     feature_details['Review'] = feedback[i]
@@ -340,19 +357,11 @@ for review_topics, word_topics, phi_values in all_topics:
     print('Document Topics:', review_topics)
     print('Word Topics:', word_topics)
     print('Phi Values:', phi_values)
-    print(" \n\n")
+    print("\n")
 
 print(feature_data)
 #https://github.com/RaRe-Technologies/gensim/blob/develop/docs/notebooks/topic_methods.ipynb
 
-lda_corpus = ldamodel_2[corpus]
-
-print('\nThis shows the reviews that fall under each topic cluster')
-cluster1 = [j for i,j in zip(lda_corpus,feedback) if i[0][1] > 0.80]
-cluster2 = [j for i,j in zip(lda_corpus,feedback) if i[1][1] > 0.80]
-#threshold has been set at 80% in this case, but can be tested if reasonable https://stackoverflow.com/questions/20984841/topic-distribution-how-do-we-see-which-document-belong-to-which-topic-after-doi
-print(cluster1)
-print(cluster2)
 
 '''
 *************************************************************************************************************************
@@ -362,7 +371,10 @@ print(cluster2)
 *************************************************************************************************************************
 '''
 print('\n\nThis is for 2/. Rank the comparisons and display the top 3')
-given_data = {'search_review': 'Excellent professional attitude that works across the whole company and is a pleasure to work with'}
 
+'''
+Step 1: Create a string variable called 'search_review' based on the dictionary
+'''
+given_data = {'search_review': 'Excellent professional attitude that works across the whole company and is a pleasure to work with'}
 search_review = given_data['search_review']
 print(search_review)
